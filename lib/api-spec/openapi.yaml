@@ -1,0 +1,373 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API for a private event attendance and gift registry.
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: event
+    description: Public event details and gift catalog
+  - name: guest
+    description: Authenticated guest RSVP and gift reservation
+  - name: admin
+    description: Host administration
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /event:
+    get:
+      operationId: getEvent
+      tags: [event]
+      summary: Get the current event
+      responses:
+        "200":
+          description: Current event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+  /gifts:
+    get:
+      operationId: listGifts
+      tags: [event]
+      summary: List gifts and their reservation status
+      responses:
+        "200":
+          description: Gift catalog grouped by category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gift"
+  /me/participation:
+    get:
+      operationId: getMyParticipation
+      tags: [guest]
+      summary: Get the current guest's RSVP
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Current guest participation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participation"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: upsertMyParticipation
+      tags: [guest]
+      summary: Confirm attendance and optionally reserve a gift
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParticipationInput"
+      responses:
+        "200":
+          description: RSVP saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participation"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Gift was just reserved by another guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/participation/gift:
+    delete:
+      operationId: releaseMyGift
+      tags: [guest]
+      summary: Release the current guest's reserved gift
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Updated participation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participation"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/summary:
+    get:
+      operationId: getAdminSummary
+      tags: [admin]
+      summary: Get attendance and gift reservation summary
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Host dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSummary"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User is not the configured host
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/participations:
+    get:
+      operationId: listAdminParticipations
+      tags: [admin]
+      summary: List all guest RSVPs and gift selections
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: All guest participation records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminParticipation"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User is not the configured host
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    clerkSession:
+      type: apiKey
+      in: cookie
+      name: __session
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        dateLabel:
+          type: string
+        dateIso:
+          type: string
+          format: date-time
+        location:
+          type: string
+        address:
+          type: string
+        hostName:
+          type: string
+        hostEmail:
+          type: string
+        rsvpDeadline:
+          type: string
+      required:
+        - id
+        - title
+        - subtitle
+        - dateLabel
+        - dateIso
+        - location
+        - address
+        - hostName
+        - hostEmail
+        - rsvpDeadline
+    Gift:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        categoryLabel:
+          type: string
+        available:
+          type: boolean
+        reservedByMe:
+          type: boolean
+      required:
+        - id
+        - name
+        - category
+        - categoryLabel
+        - available
+        - reservedByMe
+    Participation:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+        attending:
+          type: boolean
+        plusOne:
+          type: boolean
+        note:
+          type: ["string", "null"]
+        giftId:
+          type: ["string", "null"]
+        giftName:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - guestName
+        - guestEmail
+        - attending
+        - plusOne
+        - note
+        - giftId
+        - giftName
+        - updatedAt
+    ParticipationInput:
+      type: object
+      properties:
+        attending:
+          type: boolean
+        plusOne:
+          type: boolean
+        note:
+          type: ["string", "null"]
+        giftId:
+          type: ["string", "null"]
+      required:
+        - attending
+        - plusOne
+        - note
+        - giftId
+    AdminSummary:
+      type: object
+      properties:
+        totalGuests:
+          type: number
+        attendingCount:
+          type: number
+        declinedCount:
+          type: number
+        pendingCount:
+          type: number
+        plusOneCount:
+          type: number
+        totalGifts:
+          type: number
+        reservedGifts:
+          type: number
+        availableGifts:
+          type: number
+        lastUpdatedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - totalGuests
+        - attendingCount
+        - declinedCount
+        - pendingCount
+        - plusOneCount
+        - totalGifts
+        - reservedGifts
+        - availableGifts
+        - lastUpdatedAt
+    AdminParticipation:
+      type: object
+      properties:
+        id:
+          type: string
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+        attending:
+          type: boolean
+        plusOne:
+          type: boolean
+        note:
+          type: ["string", "null"]
+        giftName:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - guestName
+        - guestEmail
+        - attending
+        - plusOne
+        - note
+        - giftName
+        - updatedAt
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

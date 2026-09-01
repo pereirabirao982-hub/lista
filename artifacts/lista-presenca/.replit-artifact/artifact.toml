@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Lista de Presença e Presentes"
+description = "Aplicativo web profissional para confirmação de presença em eventos e reserva exclusiva de presentes, com login de convidados e painel administrativo para o anfitrião acompanhar confirmações e escolhas."
+version = "1.0.0"
+id = "artifacts/lista-presenca"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22180
+
+[services.development]
+run = "pnpm --filter @workspace/lista-presenca run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/lista-presenca", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/lista-presenca/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22180"
+BASE_PATH = "/"
