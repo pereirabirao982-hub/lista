@@ -22,7 +22,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 export function SiteHeader() {
   const { isSignedIn } = useUser();
   return (
-    <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
+    <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10 lg:py-6">
       <BrandMark />
       <nav className="hidden items-center gap-7 text-sm font-semibold md:flex" aria-label="Navegação principal">
         <a href="#como-funciona" className="text-primary/65 transition-colors hover:text-primary" data-testid="link-how-it-works">Como funciona</a>
@@ -44,14 +44,14 @@ function MobileMenu({ isSignedIn }: { isSignedIn: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((value) => !value)} className="grid size-10 place-items-center rounded-full border border-primary/15" aria-label="Abrir menu" data-testid="button-open-mobile-menu">
+      <button type="button" onClick={() => setOpen((value) => !value)} className="grid size-11 place-items-center rounded-full border border-primary/15 bg-card/60" aria-label={open ? 'Fechar menu' : 'Abrir menu'} data-testid="button-open-mobile-menu">
         {open ? <X size={18} /> : <Menu size={18} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-12 z-30 w-48 rounded-2xl border border-border bg-card p-2 shadow-xl animate-rise-in">
-          <a href="#como-funciona" onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-secondary" data-testid="link-mobile-how-it-works">Como funciona</a>
-          <a href="#evento" onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-secondary" data-testid="link-mobile-event-details">O encontro</a>
-          <Link href={isSignedIn ? "/user-portal" : "/sign-in"} onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-secondary" data-testid="link-mobile-auth">{isSignedIn ? 'Meu convite' : 'Entrar'}</Link>
+          <div className="absolute right-0 top-14 z-30 w-[min(15rem,calc(100vw-2.5rem))] rounded-2xl border border-border bg-card p-2 shadow-xl animate-rise-in">
+          <a href="#como-funciona" onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold hover:bg-secondary" data-testid="link-mobile-how-it-works">Como funciona</a>
+          <a href="#evento" onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold hover:bg-secondary" data-testid="link-mobile-event-details">O encontro</a>
+          <Link href={isSignedIn ? "/user-portal" : "/sign-in"} onClick={() => setOpen(false)} className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold hover:bg-secondary" data-testid="link-mobile-auth">{isSignedIn ? 'Meu convite' : 'Entrar'}</Link>
         </div>
       )}
     </div>
@@ -102,7 +102,7 @@ export function AppShell({ children, admin = false }: { children: ReactNode; adm
       {navOpen && <button type="button" className="fixed inset-0 z-30 bg-primary/25 lg:hidden" onClick={() => setNavOpen(false)} aria-label="Fechar navegação" data-testid="button-close-nav-overlay" />}
       <main className="min-h-[100dvh] lg:pl-[248px]">
         <div className="mx-auto max-w-[1440px] px-5 py-5 sm:px-8 lg:px-12 lg:py-8">
-          <div className="mb-8 flex items-center justify-between lg:hidden">
+          <div className="mb-7 flex items-center justify-between lg:hidden">
             <BrandMark compact />
             <button type="button" className="grid size-10 place-items-center rounded-full border border-border bg-card" onClick={() => setNavOpen(true)} aria-label="Abrir navegação" data-testid="button-open-sidebar"><Menu size={18} /></button>
           </div>
