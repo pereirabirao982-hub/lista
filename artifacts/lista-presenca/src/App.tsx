@@ -23,45 +23,56 @@ const clerkAppearance = {
   theme: shadcn,
   cssLayerName: 'clerk',
   options: { logoPlacement: 'inside' as const, logoLinkUrl: basePath || '/', logoImageUrl: `${window.location.origin}${basePath}/logo.svg` },
-  variables: { colorPrimary: '#17373B', colorForeground: '#17373B', colorMutedForeground: '#607276', colorDanger: '#B94740', colorBackground: '#FFFCF4', colorInput: '#F6F0E5', colorInputForeground: '#17373B', colorNeutral: '#D8CEC0', fontFamily: 'DM Sans, sans-serif', borderRadius: '1rem' },
+  variables: {
+    colorPrimary: 'hsl(185, 45%, 15%)',
+    colorForeground: 'hsl(185, 45%, 15%)',
+    colorMutedForeground: 'hsl(185, 20%, 45%)',
+    colorDanger: 'hsl(0, 70%, 50%)',
+    colorBackground: 'hsl(43, 33%, 98%)',
+    colorInput: 'hsl(43, 33%, 96%)',
+    colorInputForeground: 'hsl(185, 45%, 15%)',
+    colorNeutral: 'hsl(40, 20%, 84%)',
+    fontFamily: 'DM Sans, sans-serif',
+    borderRadius: '0.75rem'
+  },
   elements: {
     rootBox: 'w-full flex justify-center',
-    cardBox: 'bg-[#FFFCF4] rounded-3xl w-[440px] max-w-full overflow-hidden shadow-xl',
+    cardBox: 'bg-card rounded-2xl w-[440px] max-w-full overflow-hidden shadow-2xl shadow-primary/5 border border-border',
     card: '!shadow-none !border-0 !bg-transparent !rounded-none',
     footer: '!shadow-none !border-0 !bg-transparent !rounded-none',
-    headerTitle: 'text-[#17373B] font-semibold',
-    headerSubtitle: 'text-[#607276]',
-    socialButtonsBlockButtonText: 'text-[#17373B] font-semibold',
-    formFieldLabel: 'text-[#17373B] font-semibold',
-    footerActionLink: 'text-[#B9513B] font-semibold',
-    footerActionText: 'text-[#607276]',
-    dividerText: 'text-[#607276]',
-    identityPreviewEditButton: 'text-[#B9513B]',
-    formFieldSuccessText: 'text-emerald-700',
-    alertText: 'text-[#B94740]',
+    headerTitle: 'text-primary font-serif font-medium text-3xl mb-1',
+    headerSubtitle: 'text-muted-foreground text-sm',
+    socialButtonsBlockButtonText: 'text-primary font-medium',
+    formFieldLabel: 'text-primary font-medium text-sm',
+    footerActionLink: 'text-accent font-medium hover:text-accent/80',
+    footerActionText: 'text-muted-foreground',
+    dividerText: 'text-muted-foreground text-xs uppercase tracking-widest mono',
+    identityPreviewEditButton: 'text-accent',
+    formFieldSuccessText: 'text-emerald-600',
+    alertText: 'text-destructive',
     logoBox: 'rounded-xl',
     logoImage: 'rounded-xl',
-    socialButtonsBlockButton: 'border-[#D8CEC0] bg-[#F6F0E5] hover:bg-[#EEE5D7]',
-    formButtonPrimary: 'bg-[#17373B] hover:bg-[#214B50] text-[#FFF9EE] rounded-full',
-    formFieldInput: 'bg-[#F6F0E5] border-[#D8CEC0] text-[#17373B] rounded-xl',
+    socialButtonsBlockButton: 'border-border bg-background hover:bg-secondary transition-colors h-11 rounded-xl',
+    formButtonPrimary: 'bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-md transition-transform hover:-translate-y-0.5 h-11 font-medium',
+    formFieldInput: 'bg-background border-border text-primary rounded-xl focus:border-accent focus:ring-accent h-11',
     footerAction: 'bg-transparent',
-    dividerLine: 'bg-[#D8CEC0]',
-    alert: 'bg-[#FBE9E5] border-[#EDB9AE]',
-    otpCodeFieldInput: 'bg-[#F6F0E5] border-[#D8CEC0] text-[#17373B]',
-    formFieldRow: 'gap-2',
-    main: 'gap-5',
+    dividerLine: 'bg-border',
+    alert: 'bg-destructive/10 border-destructive/20 text-destructive rounded-xl',
+    otpCodeFieldInput: 'bg-background border-border text-primary rounded-xl h-12 text-lg',
+    formFieldRow: 'gap-4',
+    main: 'gap-6',
   },
 };
 
 function HomeRedirect() {
   const { isLoaded, isSignedIn } = useAuth();
-  if (!isLoaded) return <div className="min-h-[100dvh] bg-background" />;
+  if (!isLoaded) return <div className="min-h-[100dvh] bg-background paper-grain" />;
   return isSignedIn ? <Redirect to="/user-portal" /> : <HomePage />;
 }
 
 function Protected({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
-  if (!isLoaded) return <div className="min-h-[100dvh] bg-background" />;
+  if (!isLoaded) return <div className="min-h-[100dvh] bg-background paper-grain" />;
   return isSignedIn ? <>{children}</> : <Redirect to="/" />;
 }
 
@@ -94,20 +105,68 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 
 function ClerkApp() {
   const [, setLocation] = useLocation();
-  return <ClerkProvider publishableKey={clerkPubKey} proxyUrl={clerkProxyUrl} appearance={clerkAppearance} signInUrl={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} localization={{ signIn: { start: { title: 'Boas-vindas de volta', subtitle: 'Entre para acessar seu convite' } }, signUp: { start: { title: 'Crie seu acesso', subtitle: 'Seu convite começa por aqui' } } }} routerPush={(to) => setLocation(stripBase(to))} routerReplace={(to) => setLocation(stripBase(to), { replace: true })}>
-    <QueryClientProvider client={queryClient}>
-      <ClerkQueryClientCacheInvalidator />
-      <RoutedErrorBoundary><Switch>
-        <Route path="/" component={HomeRedirect} />
-        <Route path="/sign-in/*?" component={SignInPage} />
-        <Route path="/sign-up/*?" component={SignUpPage} />
-        <Route path="/user-portal"><Protected><UserPortalPage /></Protected></Route>
-        <Route path="/admin"><Protected><AdminPage /></Protected></Route>
-        <Route component={NotFound} />
-      </Switch></RoutedErrorBoundary>
-      <Toaster />
-    </QueryClientProvider>
-  </ClerkProvider>;
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={clerkProxyUrl}
+      appearance={clerkAppearance}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      localization={{
+        locale: 'pt-BR',
+        socialButtonsBlockButton: 'Continuar com {{provider|titleize}}',
+        dividerText: 'ou',
+        formFieldLabel__emailAddress: 'Endereço de e-mail',
+        formFieldLabel__password: 'Senha',
+        formFieldLabel__firstName: 'Nome',
+        formFieldLabel__lastName: 'Sobrenome',
+        formFieldInputPlaceholder__emailAddress: 'Digite seu e-mail',
+        formFieldInputPlaceholder__password: 'Digite sua senha',
+        formFieldInputPlaceholder__signUpPassword: 'Crie uma senha',
+        formFieldAction__forgotPassword: 'Esqueci minha senha',
+        formButtonPrimary: 'Continuar',
+        backButton: 'Voltar',
+        signIn: {
+          start: {
+            title: 'Boas-vindas de volta',
+            subtitle: 'Entre para acessar seu convite',
+            actionText: 'Ainda não tem acesso?',
+            actionLink: 'Criar acesso',
+          },
+          password: {
+            title: 'Digite sua senha',
+            subtitle: 'Use a senha vinculada ao seu convite',
+            actionLink: 'Usar outro método',
+          },
+        },
+        signUp: {
+          start: {
+            title: 'Crie seu acesso',
+            subtitle: 'Seu convite começa por aqui',
+            actionText: 'Já tem uma conta?',
+            actionLink: 'Entrar',
+          },
+        },
+      }}
+      routerPush={(to) => setLocation(stripBase(to))}
+      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ClerkQueryClientCacheInvalidator />
+        <RoutedErrorBoundary>
+          <Switch>
+            <Route path="/" component={HomeRedirect} />
+            <Route path="/sign-in/*?" component={SignInPage} />
+            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/user-portal"><Protected><UserPortalPage /></Protected></Route>
+            <Route path="/admin"><Protected><AdminPage /></Protected></Route>
+            <Route component={NotFound} />
+          </Switch>
+        </RoutedErrorBoundary>
+        <Toaster />
+      </QueryClientProvider>
+    </ClerkProvider>
+  );
 }
 
 function App() { return <WouterRouter base={basePath}><ClerkApp /></WouterRouter>; }
