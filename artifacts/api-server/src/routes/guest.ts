@@ -62,6 +62,11 @@ router.put("/me/participation", requireGuest, async (req, res): Promise<void> =>
 
   try {
     await db.transaction(async (tx) => {
+      // Serializa confirmações simultâneas do mesmo login, inclusive no primeiro acesso.
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${userId}))`,
+      );
+
       const current = await tx
         .select({ id: participationsTable.id })
         .from(participationsTable)
