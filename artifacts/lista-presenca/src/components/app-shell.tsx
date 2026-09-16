@@ -2,6 +2,7 @@ import { CalendarDays, LogOut, Menu, ShieldCheck, Sparkles, X } from 'lucide-rea
 import { type ReactNode, useState } from 'react';
 import { Link } from 'wouter';
 import { useClerk, useUser } from '@clerk/react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -27,13 +28,15 @@ export function SiteHeader() {
       <nav className="hidden items-center gap-8 text-sm font-medium md:flex" aria-label="Navegação principal">
         <a href="#como-funciona" className="text-primary/70 transition-colors hover:text-primary" data-testid="link-how-it-works">Como funciona</a>
         <a href="#evento" className="text-primary/70 transition-colors hover:text-primary" data-testid="link-event-details">O encontro</a>
+        <ThemeToggle compact />
         {isSignedIn ? (
           <Link href="/user-portal" className="rounded-full border border-primary/20 px-5 py-2.5 text-primary transition-all hover:border-primary/50 hover:bg-primary/5" data-testid="link-header-portal">Meu convite</Link>
         ) : (
           <Link href="/sign-in" className="rounded-full border border-primary/20 px-5 py-2.5 text-primary transition-all hover:border-primary/50 hover:bg-primary/5" data-testid="link-header-sign-in">Entrar</Link>
         )}
       </nav>
-      <div className="md:hidden">
+      <div className="flex items-center gap-2 md:hidden">
+        <ThemeToggle compact />
         <MobileMenu isSignedIn={Boolean(isSignedIn)} />
       </div>
     </header>
@@ -91,6 +94,9 @@ export function AppShell({ children, admin = false }: { children: ReactNode; adm
         </div>
 
         <div className="mt-auto pt-8">
+          <div className="mb-5 px-2">
+            <ThemeToggle />
+          </div>
           <div className="editorial-rule mb-6" />
           <div className="flex items-center gap-4 px-3">
             <span className="grid size-11 shrink-0 place-items-center rounded-full bg-sidebar-primary font-serif font-medium text-sidebar-primary-foreground shadow-sm">{initials}</span>
@@ -111,9 +117,12 @@ export function AppShell({ children, admin = false }: { children: ReactNode; adm
         <div className="mx-auto max-w-[1200px] px-6 py-6 sm:px-10 lg:px-16 lg:py-12">
           <div className="mb-8 flex items-center justify-between lg:hidden">
             <BrandMark compact />
-            <button type="button" className="grid size-12 place-items-center rounded-full border border-border bg-card shadow-sm transition-colors hover:bg-secondary" onClick={() => setNavOpen(true)} aria-label="Abrir navegação" data-testid="button-open-sidebar">
-              <Menu size={20} className="text-primary" />
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle compact />
+              <button type="button" className="grid size-12 place-items-center rounded-full border border-border bg-card shadow-sm transition-colors hover:bg-secondary" onClick={() => setNavOpen(true)} aria-label="Abrir navegação" data-testid="button-open-sidebar">
+                <Menu size={20} className="text-primary" />
+              </button>
+            </div>
           </div>
           <div className="mb-10 hidden items-center gap-2.5 text-sm font-medium text-muted-foreground lg:flex">
             <CalendarDays size={16} /> Seu espaço de presença

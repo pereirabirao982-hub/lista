@@ -48,6 +48,7 @@
 }
 
 :root {
+  color-scheme: light;
   --background: 43 33% 96%;
   --foreground: 185 45% 15%;
   --card: 43 33% 98%;
@@ -81,6 +82,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: 185 45% 8%;
   --foreground: 43 33% 96%;
   --card: 185 45% 10%;
@@ -117,6 +119,7 @@
     @apply font-sans antialiased bg-background text-foreground;
     min-width: 320px;
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 300ms ease, color 300ms ease;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif font-normal tracking-tight;
@@ -131,6 +134,15 @@
 .paper-grain::after {
   content: ''; position: fixed; inset: 0; pointer-events: none; opacity: 0.04; z-index: 9999;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.dark .paper-grain::after {
+  opacity: 0.025;
+  filter: invert(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
 }
 
 .serif { font-family: var(--font-serif); }

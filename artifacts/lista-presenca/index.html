@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        const stored = localStorage.getItem('lista-presenca-theme');
+        const dark = stored === 'dark' || (!stored && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
     <title>Lista de Presença e Presentes</title>
     <meta name="description" content="Lista de Presença e Presentes — built on Replit. Update this description to reflect the app." />
     <meta name="robots" content="index, follow" />

@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/reac
 import { Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useTheme } from '@/components/theme-provider';
 import NotFound from '@/pages/not-found';
 import HomePage from '@/pages/home';
 import UserPortalPage from '@/pages/user-portal';
@@ -19,19 +21,20 @@ if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env fi
 
 function stripBase(path: string) { return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path; }
 
-const clerkAppearance = {
+function getClerkAppearance(dark: boolean) {
+  return {
   theme: shadcn,
   cssLayerName: 'clerk',
   options: { logoPlacement: 'inside' as const, logoLinkUrl: basePath || '/', logoImageUrl: `${window.location.origin}${basePath}/logo.svg` },
   variables: {
-    colorPrimary: 'hsl(185, 45%, 15%)',
-    colorForeground: 'hsl(185, 45%, 15%)',
-    colorMutedForeground: 'hsl(185, 20%, 45%)',
+    colorPrimary: dark ? 'hsl(43, 33%, 96%)' : 'hsl(185, 45%, 15%)',
+    colorForeground: dark ? 'hsl(43, 33%, 96%)' : 'hsl(185, 45%, 15%)',
+    colorMutedForeground: dark ? 'hsl(43, 20%, 70%)' : 'hsl(185, 20%, 45%)',
     colorDanger: 'hsl(0, 70%, 50%)',
-    colorBackground: 'hsl(43, 33%, 98%)',
-    colorInput: 'hsl(43, 33%, 96%)',
-    colorInputForeground: 'hsl(185, 45%, 15%)',
-    colorNeutral: 'hsl(40, 20%, 84%)',
+    colorBackground: dark ? 'hsl(185, 45%, 10%)' : 'hsl(43, 33%, 98%)',
+    colorInput: dark ? 'hsl(185, 30%, 18%)' : 'hsl(43, 33%, 96%)',
+    colorInputForeground: dark ? 'hsl(43, 33%, 96%)' : 'hsl(185, 45%, 15%)',
+    colorNeutral: dark ? 'hsl(185, 30%, 22%)' : 'hsl(40, 20%, 84%)',
     fontFamily: 'DM Sans, sans-serif',
     borderRadius: '0.75rem'
   },
@@ -63,6 +66,7 @@ const clerkAppearance = {
     main: 'gap-6',
   },
 };
+}
 
 function HomeRedirect() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -77,10 +81,21 @@ function Protected({ children }: { children: ReactNode }) {
 }
 
 function SignInPage() {
-  return <div className="paper-grain flex min-h-[100dvh] items-center justify-center bg-background px-4 py-10"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
+  return <AuthPageShell><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></AuthPageShell>;
 }
 function SignUpPage() {
-  return <div className="paper-grain flex min-h-[100dvh] items-center justify-center bg-background px-4 py-10"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+  return <AuthPageShell><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></AuthPageShell>;
+}
+
+function AuthPageShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="paper-grain relative flex min-h-[100dvh] items-center justify-center bg-background px-4 py-20">
+      <div className="absolute right-5 top-5 sm:right-8 sm:top-8">
+        <ThemeToggle compact />
+      </div>
+      {children}
+    </div>
+  );
 }
 
 function ClerkQueryClientCacheInvalidator() {
@@ -105,11 +120,12 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 
 function ClerkApp() {
   const [, setLocation] = useLocation();
+  const { theme } = useTheme();
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
       proxyUrl={clerkProxyUrl}
-      appearance={clerkAppearance}
+      appearance={getClerkAppearance(theme === 'dark')}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       localization={{
