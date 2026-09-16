@@ -27,6 +27,9 @@ export interface Gift {
   name: string;
   category: string;
   categoryLabel: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
   available: boolean;
   reservedByMe: boolean;
 }
@@ -40,10 +43,8 @@ export interface Participation {
   plusOne: boolean;
   /** @nullable */
   note: string | null;
-  /** @nullable */
-  giftId: string | null;
-  /** @nullable */
-  giftName: string | null;
+  giftIds: string[];
+  giftNames: string[];
   updatedAt: string;
 }
 
@@ -52,8 +53,8 @@ export interface ParticipationInput {
   plusOne: boolean;
   /** @nullable */
   note: string | null;
-  /** @nullable */
-  giftId: string | null;
+  /** @maxItems 2 */
+  giftIds: string[];
 }
 
 export interface AdminSummary {
@@ -77,8 +78,7 @@ export interface AdminParticipation {
   plusOne: boolean;
   /** @nullable */
   note: string | null;
-  /** @nullable */
-  giftName: string | null;
+  giftNames: string[];
   updatedAt: string;
 }
 

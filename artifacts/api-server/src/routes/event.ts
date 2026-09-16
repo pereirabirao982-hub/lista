@@ -9,7 +9,7 @@ import {
   EVENT_ID,
   buildGiftResponse,
   getMyParticipation,
-  getReservedGiftIds,
+  getGiftReservationCounts,
   getUserId,
 } from "../lib/event";
 
@@ -28,13 +28,17 @@ router.get("/event", async (req, res): Promise<void> => {
 });
 
 router.get("/gifts", async (req, res): Promise<void> => {
-  const [gifts, reservedGiftIds, participation] = await Promise.all([
+  const [gifts, reservationCounts, participation] = await Promise.all([
     db.select().from(giftsTable).where(eq(giftsTable.eventId, EVENT_ID)),
-    getReservedGiftIds(),
+    getGiftReservationCounts(),
     getUserId(req) ? getMyParticipation(getUserId(req)!) : Promise.resolve(null),
   ]);
   const response = gifts.map((gift) =>
-    buildGiftResponse(gift, reservedGiftIds, participation?.giftId ?? null),
+    buildGiftResponse(
+      gift,
+      reservationCounts,
+      new Set(participation?.giftIds ?? []),
+    ),
   );
   res.json(ListGiftsResponse.parse(response));
 });

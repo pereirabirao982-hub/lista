@@ -15,9 +15,7 @@ export interface Participation {
   plusOne: boolean;
   /** @nullable */
   note: string | null;
-  /** @nullable */
-  giftId: string | null;
-  /** @nullable */
-  giftName: string | null;
+  giftIds: string[];
+  giftNames: string[];
   updatedAt: Date;
 }

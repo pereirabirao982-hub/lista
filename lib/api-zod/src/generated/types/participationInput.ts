@@ -11,6 +11,6 @@ export interface ParticipationInput {
   plusOne: boolean;
   /** @nullable */
   note: string | null;
-  /** @nullable */
-  giftId: string | null;
+  /** @maxItems 2 */
+  giftIds: string[];
 }

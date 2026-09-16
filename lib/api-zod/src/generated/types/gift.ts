@@ -11,6 +11,9 @@ export interface Gift {
   name: string;
   category: string;
   categoryLabel: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
   available: boolean;
   reservedByMe: boolean;
 }

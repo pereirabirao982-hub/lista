@@ -42,6 +42,9 @@ export const ListGiftsResponseItem = zod.object({
   "name": zod.string(),
   "category": zod.string(),
   "categoryLabel": zod.string(),
+  "quantity": zod.number(),
+  "reservedQuantity": zod.number(),
+  "availableQuantity": zod.number(),
   "available": zod.boolean(),
   "reservedByMe": zod.boolean()
 })
@@ -59,8 +62,8 @@ export const GetMyParticipationResponse = zod.object({
   "attending": zod.boolean(),
   "plusOne": zod.boolean(),
   "note": zod.string().nullable(),
-  "giftId": zod.string().nullable(),
-  "giftName": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
   "updatedAt": zod.coerce.date()
 })
 
@@ -68,11 +71,15 @@ export const GetMyParticipationResponse = zod.object({
 /**
  * @summary Confirm attendance and optionally reserve a gift
  */
+export const upsertMyParticipationBodyGiftIdsMax = 2;
+
+
+
 export const UpsertMyParticipationBody = zod.object({
   "attending": zod.boolean(),
   "plusOne": zod.boolean(),
   "note": zod.string().nullable(),
-  "giftId": zod.string().nullable()
+  "giftIds": zod.array(zod.string()).max(upsertMyParticipationBodyGiftIdsMax)
 })
 
 export const UpsertMyParticipationResponse = zod.object({
@@ -83,8 +90,8 @@ export const UpsertMyParticipationResponse = zod.object({
   "attending": zod.boolean(),
   "plusOne": zod.boolean(),
   "note": zod.string().nullable(),
-  "giftId": zod.string().nullable(),
-  "giftName": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
   "updatedAt": zod.coerce.date()
 })
 
@@ -100,8 +107,8 @@ export const ReleaseMyGiftResponse = zod.object({
   "attending": zod.boolean(),
   "plusOne": zod.boolean(),
   "note": zod.string().nullable(),
-  "giftId": zod.string().nullable(),
-  "giftName": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
   "updatedAt": zod.coerce.date()
 })
 
@@ -132,7 +139,7 @@ export const ListAdminParticipationsResponseItem = zod.object({
   "attending": zod.boolean(),
   "plusOne": zod.boolean(),
   "note": zod.string().nullable(),
-  "giftName": zod.string().nullable(),
+  "giftNames": zod.array(zod.string()),
   "updatedAt": zod.coerce.date()
 })
 export const ListAdminParticipationsResponse = zod.array(ListAdminParticipationsResponseItem)

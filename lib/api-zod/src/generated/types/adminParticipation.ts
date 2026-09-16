@@ -14,7 +14,6 @@ export interface AdminParticipation {
   plusOne: boolean;
   /** @nullable */
   note: string | null;
-  /** @nullable */
-  giftName: string | null;
+  giftNames: string[];
   updatedAt: Date;
 }

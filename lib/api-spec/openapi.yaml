@@ -241,6 +241,12 @@ components:
           type: string
         categoryLabel:
           type: string
+        quantity:
+          type: number
+        reservedQuantity:
+          type: number
+        availableQuantity:
+          type: number
         available:
           type: boolean
         reservedByMe:
@@ -250,6 +256,9 @@ components:
         - name
         - category
         - categoryLabel
+        - quantity
+        - reservedQuantity
+        - availableQuantity
         - available
         - reservedByMe
     Participation:
@@ -269,10 +278,14 @@ components:
           type: boolean
         note:
           type: ["string", "null"]
-        giftId:
-          type: ["string", "null"]
-        giftName:
-          type: ["string", "null"]
+        giftIds:
+          type: array
+          items:
+            type: string
+        giftNames:
+          type: array
+          items:
+            type: string
         updatedAt:
           type: string
           format: date-time
@@ -284,8 +297,8 @@ components:
         - attending
         - plusOne
         - note
-        - giftId
-        - giftName
+        - giftIds
+        - giftNames
         - updatedAt
     ParticipationInput:
       type: object
@@ -296,13 +309,17 @@ components:
           type: boolean
         note:
           type: ["string", "null"]
-        giftId:
-          type: ["string", "null"]
+        giftIds:
+          type: array
+          maxItems: 2
+          uniqueItems: true
+          items:
+            type: string
       required:
         - attending
         - plusOne
         - note
-        - giftId
+        - giftIds
     AdminSummary:
       type: object
       properties:
@@ -350,8 +367,10 @@ components:
           type: boolean
         note:
           type: ["string", "null"]
-        giftName:
-          type: ["string", "null"]
+        giftNames:
+          type: array
+          items:
+            type: string
         updatedAt:
           type: string
           format: date-time
@@ -362,7 +381,7 @@ components:
         - attending
         - plusOne
         - note
-        - giftName
+        - giftNames
         - updatedAt
     ErrorResponse:
       type: object

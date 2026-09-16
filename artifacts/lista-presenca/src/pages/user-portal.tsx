@@ -27,20 +27,24 @@ export default function UserPortalPage() {
   const giftsQuery = useListGifts({ query: { queryKey: getListGiftsQueryKey() } });
   const upsert = useUpsertMyParticipation();
   const release = useReleaseMyGift();
-  const form = useForm<ParticipationInput>({ defaultValues: { attending: true, plusOne: false, note: '', giftId: null } });
+  const form = useForm<ParticipationInput>({ defaultValues: { attending: true, plusOne: false, note: '', giftIds: [] } });
   const [saved, setSaved] = useState(false);
   const participation = participationQuery.data;
   const participationStatus = (participationQuery.error as { status?: number } | null)?.status;
 
   useEffect(() => {
     if (participation) {
-      form.reset({ attending: participation.attending, plusOne: participation.plusOne, note: participation.note || '', giftId: participation.giftId });
+      form.reset({ attending: participation.attending, plusOne: participation.plusOne, note: participation.note || '', giftIds: participation.giftIds });
     }
   }, [participation]); // initialize the single form context from the server record
 
   const onSubmit = (values: ParticipationInput) => {
     setSaved(false);
-    const payload = { ...values, giftId: values.attending ? values.giftId : null, plusOne: values.attending ? values.plusOne : false, note: values.note?.trim() || null };
+    if (values.attending && values.giftIds.length < 1) {
+      form.setError('giftIds', { type: 'min', message: 'Escolha pelo menos um presente.' });
+      return;
+    }
+    const payload = { ...values, giftIds: values.attending ? values.giftIds : [], plusOne: values.attending ? values.plusOne : false, note: values.note?.trim() || null };
     upsert.mutate({ data: payload }, {
       onSuccess: async () => {
         setSaved(true);
@@ -59,7 +63,7 @@ export default function UserPortalPage() {
     if (!window.confirm('Quer liberar este presente para outra pessoa escolher?')) return;
     release.mutate(undefined, {
       onSuccess: async () => {
-        form.setValue('giftId', null, { shouldDirty: true });
+        form.setValue('giftIds', [], { shouldDirty: true });
         await Promise.all([client.invalidateQueries({ queryKey: getGetMyParticipationQueryKey() }), client.invalidateQueries({ queryKey: getListGiftsQueryKey() }), client.invalidateQueries({ queryKey: getGetAdminSummaryQueryKey() }), client.invalidateQueries({ queryKey: getListAdminParticipationsQueryKey() })]);
       },
     });
@@ -94,7 +98,7 @@ export default function UserPortalPage() {
                 <div className="mt-7 space-y-4 border-t border-primary-foreground/15 pt-5 text-sm"><p><strong className="block text-primary-foreground/55">Quando</strong><span data-testid="text-portal-event-date">{event.dateLabel}</span></p><p><strong className="block text-primary-foreground/55">Onde</strong><span data-testid="text-portal-event-location">{event.location}</span><span className="block text-primary-foreground/65">{event.address}</span></p><p><strong className="block text-primary-foreground/55">Confirme até</strong><span>{event.rsvpDeadline}</span></p></div>
               </div>
               <div className="rounded-3xl border border-border bg-card p-6"><div className="flex items-center gap-2 text-sm font-bold"><LockKeyhole size={16} className="text-accent" /> Seu acesso é privado</div><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Só você e o anfitrião podem ver esta resposta. Nada é público.</p></div>
-              {participation?.giftId && <button type="button" onClick={releaseGift} disabled={release.isPending} className="flex w-full items-center justify-between rounded-2xl border border-destructive/25 px-5 py-4 text-left text-sm font-semibold text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50" data-testid="button-release-gift"><span>{release.isPending ? 'Liberando...' : 'Liberar meu presente'}</span><RefreshCcw size={16} className={release.isPending ? 'animate-spin' : ''} /></button>}
+              {participation && participation.giftIds.length > 0 && <button type="button" onClick={releaseGift} disabled={release.isPending} className="flex w-full items-center justify-between rounded-2xl border border-destructive/25 px-5 py-4 text-left text-sm font-semibold text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50" data-testid="button-release-gift"><span>{release.isPending ? 'Liberando...' : 'Liberar meus presentes'}</span><RefreshCcw size={16} className={release.isPending ? 'animate-spin' : ''} /></button>}
             </aside>
             <div className="xl:col-span-2 flex flex-col items-start gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3">{saved && <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700 animate-rise-in" data-testid="status-rsvp-saved"><Check size={17} /> Resposta salva com carinho</span>}{upsert.isError && <span className="flex items-center gap-2 text-sm font-semibold text-destructive" data-testid="status-rsvp-error"><CircleAlert size={17} /> Não foi possível salvar. Tente novamente.</span>}</div><button type="submit" disabled={upsert.isPending} className="group flex w-full items-center justify-center gap-3 rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-primary shadow-md transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60 sm:w-auto" data-testid="button-save-rsvp">{upsert.isPending ? <LoaderCircle size={17} className="animate-spin" /> : <Send size={17} />} {upsert.isPending ? 'Salvando...' : 'Salvar minha resposta'}<ChevronRight size={16} className="transition-transform group-hover:translate-x-1" /></button></div>
           </form>
@@ -107,7 +111,7 @@ export default function UserPortalPage() {
 function AttendanceCard() {
   const { register, watch, setValue } = useFormContext<ParticipationInput>();
   const attending = watch('attending');
-  return <section className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8"><div className="flex items-start justify-between"><div><p className="mono text-[10px] uppercase tracking-[.17em] text-accent">01 / Presença</p><h2 className="serif mt-3 text-3xl font-semibold">Você vem?</h2></div><UserRound size={20} className="text-primary/35" /></div><div className="mt-7 grid gap-3 sm:grid-cols-2"><Choice selected={attending === true} onClick={() => setValue('attending', true, { shouldDirty: true })} title="Sim, estarei lá" detail="Pode contar comigo." testId="choice-attending-yes" /><Choice selected={attending === false} onClick={() => { setValue('attending', false, { shouldDirty: true }); setValue('plusOne', false); setValue('giftId', null); }} title="Não vou conseguir" detail="Aviso para o anfitrião." testId="choice-attending-no" /></div><input type="hidden" {...register('attending')} /></section>;
+  return <section className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8"><div className="flex items-start justify-between"><div><p className="mono text-[10px] uppercase tracking-[.17em] text-accent">01 / Presença</p><h2 className="serif mt-3 text-3xl font-semibold">Você vem?</h2></div><UserRound size={20} className="text-primary/35" /></div><div className="mt-7 grid gap-3 sm:grid-cols-2"><Choice selected={attending === true} onClick={() => setValue('attending', true, { shouldDirty: true })} title="Sim, estarei lá" detail="Pode contar comigo." testId="choice-attending-yes" /><Choice selected={attending === false} onClick={() => { setValue('attending', false, { shouldDirty: true }); setValue('plusOne', false); setValue('giftIds', []); }} title="Não vou conseguir" detail="Aviso para o anfitrião." testId="choice-attending-no" /></div><input type="hidden" {...register('attending')} /></section>;
 }
 
 function Choice({ selected, onClick, title, detail, testId }: { selected: boolean; onClick: () => void; title: string; detail: string; testId: string }) {
@@ -115,10 +119,23 @@ function Choice({ selected, onClick, title, detail, testId }: { selected: boolea
 }
 
 function GiftPicker({ gifts }: { gifts: GiftType[] }) {
-  const { watch, setValue } = useFormContext<ParticipationInput>();
+  const { watch, setValue, setError, clearErrors, formState: { errors } } = useFormContext<ParticipationInput>();
   const attending = watch('attending');
-  const selectedId = watch('giftId');
-  return <section className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="mono text-[10px] uppercase tracking-[.17em] text-accent">02 / Um gesto</p><h2 className="serif mt-3 text-3xl font-semibold">Escolha seu presente</h2><p className="mt-2 text-sm text-muted-foreground">Um presente por convidado. Escolha com tempo.</p></div><span className="flex items-center gap-2 rounded-full bg-secondary px-3 py-2 text-xs font-bold"><Gift size={14} /> {gifts.filter((gift) => gift.available || gift.reservedByMe).length} disponíveis</span></div>{gifts.length === 0 ? <div className="mt-7 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground" data-testid="empty-gifts">A lista está sendo preparada pelo anfitrião.</div> : <div className={`mt-7 grid gap-3 sm:grid-cols-2 ${!attending ? 'pointer-events-none opacity-45' : ''}`}>{gifts.map((gift) => { const selected = selectedId === gift.id || gift.reservedByMe; const unavailable = !gift.available && !gift.reservedByMe; return <button type="button" key={gift.id} disabled={unavailable || !attending} onClick={() => setValue('giftId', selected ? null : gift.id, { shouldDirty: true })} className={`group flex min-h-[104px] items-start justify-between rounded-2xl border p-4 text-left transition-all duration-300 ${selected ? 'border-accent bg-accent/12 ring-1 ring-accent' : unavailable ? 'cursor-not-allowed border-border bg-secondary/30' : 'border-border hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm'}`} data-testid={`button-gift-${gift.id}`}><span><span className="mono text-[9px] uppercase tracking-[.16em] text-muted-foreground">{gift.categoryLabel}</span><strong className="mt-2 block text-sm">{gift.name}</strong><span className={`mt-2 block text-xs ${unavailable ? 'text-muted-foreground' : selected ? 'font-semibold text-accent-foreground' : 'text-muted-foreground'}`}>{selected ? 'Escolhido por você' : unavailable ? 'Já reservado' : 'Disponível'}</span></span><span className={`grid size-7 shrink-0 place-items-center rounded-full border ${selected ? 'border-accent bg-accent text-primary' : 'border-border text-transparent'}`}>{selected ? <Check size={15} /> : <Heart size={14} />}</span></button>; })}</div>}{!attending && <p className="mt-5 text-xs font-semibold text-muted-foreground">A lista de presentes aparece quando você confirma que virá.</p>}</section>;
+  const selectedIds = watch('giftIds') || [];
+  const availableUnits = gifts.reduce((total, gift) => total + gift.availableQuantity, 0);
+  const toggleGift = (giftId: string) => {
+    if (selectedIds.includes(giftId)) {
+      setValue('giftIds', selectedIds.filter((id) => id !== giftId), { shouldDirty: true });
+      return;
+    }
+    if (selectedIds.length >= 2) {
+      setError('giftIds', { type: 'max', message: 'Você pode escolher no máximo dois presentes.' });
+      return;
+    }
+    clearErrors('giftIds');
+    setValue('giftIds', [...selectedIds, giftId], { shouldDirty: true });
+  };
+  return <section className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="mono text-[10px] uppercase tracking-[.17em] text-accent">02 / Um gesto</p><h2 className="serif mt-3 text-3xl font-semibold">Escolha seus presentes</h2><p className="mt-2 text-sm text-muted-foreground">Escolha no mínimo 1 e no máximo 2 itens.</p></div><div className="flex flex-col items-start gap-2 sm:items-end"><span className="flex items-center gap-2 rounded-full bg-secondary px-3 py-2 text-xs font-bold"><Gift size={14} /> {availableUnits} unidades disponíveis</span><span className="text-xs font-semibold text-muted-foreground">{selectedIds.length} de 2 escolhidos</span></div></div>{errors.giftIds?.message && <p className="mt-4 text-sm font-semibold text-destructive">{errors.giftIds.message}</p>}{gifts.length === 0 ? <div className="mt-7 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground" data-testid="empty-gifts">A lista está sendo preparada pelo anfitrião.</div> : <div className={`mt-7 grid gap-3 sm:grid-cols-2 ${!attending ? 'pointer-events-none opacity-45' : ''}`}>{gifts.map((gift) => { const selected = selectedIds.includes(gift.id); const unavailable = gift.availableQuantity <= 0 && !selected; return <button type="button" key={gift.id} disabled={unavailable || !attending} onClick={() => toggleGift(gift.id)} className={`group flex min-h-[104px] items-start justify-between rounded-2xl border p-4 text-left transition-all duration-300 ${selected ? 'border-accent bg-accent/12 ring-1 ring-accent' : unavailable ? 'cursor-not-allowed border-border bg-secondary/30' : 'border-border hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm'}`} data-testid={`button-gift-${gift.id}`}><span><span className="mono text-[9px] uppercase tracking-[.16em] text-muted-foreground">{gift.categoryLabel}</span><strong className="mt-2 block text-sm">{gift.name}</strong><span className={`mt-2 block text-xs ${unavailable ? 'text-muted-foreground' : selected ? 'font-semibold text-accent-foreground' : 'text-muted-foreground'}`}>{selected ? 'Escolhido por você' : unavailable ? 'Esgotado' : `${gift.availableQuantity} de ${gift.quantity} disponíveis`}</span></span><span className={`grid size-7 shrink-0 place-items-center rounded-full border ${selected ? 'border-accent bg-accent text-primary' : 'border-border text-transparent'}`}>{selected ? <Check size={15} /> : <Heart size={14} />}</span></button>; })}</div>}{!attending && <p className="mt-5 text-xs font-semibold text-muted-foreground">A lista de presentes aparece quando você confirma que virá.</p>}</section>;
 }
 
 function NoteField() {
