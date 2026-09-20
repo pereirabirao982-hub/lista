@@ -12,6 +12,7 @@ import {
   getGiftReservationCounts,
   getUserId,
 } from "../lib/event";
+import { getGuestIdentity } from "../lib/guest-access";
 
 const router: IRouter = Router();
 
@@ -28,10 +29,11 @@ router.get("/event", async (req, res): Promise<void> => {
 });
 
 router.get("/gifts", async (req, res): Promise<void> => {
+  const identity = getGuestIdentity(req) ?? getUserId(req);
   const [gifts, reservationCounts, participation] = await Promise.all([
     db.select().from(giftsTable).where(eq(giftsTable.eventId, EVENT_ID)),
     getGiftReservationCounts(),
-    getUserId(req) ? getMyParticipation(getUserId(req)!) : Promise.resolve(null),
+    identity ? getMyParticipation(identity) : Promise.resolve(null),
   ]);
   const response = gifts.map((gift) =>
     buildGiftResponse(

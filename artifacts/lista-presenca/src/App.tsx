@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react';
-import { ClerkProvider, SignIn, SignUp, useAuth, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, useAuth, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
@@ -47,8 +47,8 @@ function getClerkAppearance(dark: boolean) {
     headerSubtitle: 'text-muted-foreground text-sm',
     socialButtonsBlockButtonText: 'text-primary font-medium',
     formFieldLabel: 'text-primary font-medium text-sm',
-    footerActionLink: 'text-accent font-medium hover:text-accent/80',
-    footerActionText: 'text-muted-foreground',
+    footerActionLink: '!hidden',
+    footerActionText: '!hidden',
     dividerText: 'text-muted-foreground text-xs uppercase tracking-widest mono',
     identityPreviewEditButton: 'text-accent',
     formFieldSuccessText: 'text-emerald-600',
@@ -58,7 +58,7 @@ function getClerkAppearance(dark: boolean) {
     socialButtonsBlockButton: 'border-border bg-background hover:bg-secondary transition-colors h-11 rounded-xl',
     formButtonPrimary: 'bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-md transition-transform hover:-translate-y-0.5 h-11 font-medium',
     formFieldInput: 'bg-background border-border text-primary rounded-xl focus:border-accent focus:ring-accent h-11',
-    footerAction: 'bg-transparent',
+    footerAction: '!hidden',
     dividerLine: 'bg-border',
     alert: 'bg-destructive/10 border-destructive/20 text-destructive rounded-xl',
     otpCodeFieldInput: 'bg-background border-border text-primary rounded-xl h-12 text-lg',
@@ -68,12 +68,6 @@ function getClerkAppearance(dark: boolean) {
 };
 }
 
-function HomeRedirect() {
-  const { isLoaded, isSignedIn } = useAuth();
-  if (!isLoaded) return <div className="min-h-[100dvh] bg-background paper-grain" />;
-  return isSignedIn ? <Redirect to="/user-portal" /> : <HomePage />;
-}
-
 function Protected({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded) return <div className="min-h-[100dvh] bg-background paper-grain" />;
@@ -81,10 +75,7 @@ function Protected({ children }: { children: ReactNode }) {
 }
 
 function SignInPage() {
-  return <AuthPageShell><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></AuthPageShell>;
-}
-function SignUpPage() {
-  return <AuthPageShell><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></AuthPageShell>;
+  return <AuthPageShell><SignIn routing="path" path={`${basePath}/sign-in`} forceRedirectUrl={`${basePath}/admin`} withSignUp={false} /></AuthPageShell>;
 }
 
 function AuthPageShell({ children }: { children: ReactNode }) {
@@ -144,23 +135,13 @@ function ClerkApp() {
         backButton: 'Voltar',
         signIn: {
           start: {
-            title: 'Boas-vindas de volta',
-            subtitle: 'Entre para acessar seu convite',
-            actionText: 'Ainda não tem acesso?',
-            actionLink: 'Criar acesso',
+            title: 'Área administrativa',
+            subtitle: 'Entre com um e-mail autorizado',
           },
           password: {
             title: 'Digite sua senha',
-            subtitle: 'Use a senha vinculada ao seu convite',
+            subtitle: 'Use a senha da conta administrativa',
             actionLink: 'Usar outro método',
-          },
-        },
-        signUp: {
-          start: {
-            title: 'Crie seu acesso',
-            subtitle: 'Seu convite começa por aqui',
-            actionText: 'Já tem uma conta?',
-            actionLink: 'Entrar',
           },
         },
       }}
@@ -171,10 +152,10 @@ function ClerkApp() {
         <ClerkQueryClientCacheInvalidator />
         <RoutedErrorBoundary>
           <Switch>
-            <Route path="/" component={HomeRedirect} />
+            <Route path="/" component={HomePage} />
             <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
-            <Route path="/user-portal"><Protected><UserPortalPage /></Protected></Route>
+            <Route path="/sign-up/*?"><Redirect to="/sign-in" /></Route>
+            <Route path="/user-portal" component={UserPortalPage} />
             <Route path="/admin"><Protected><AdminPage /></Protected></Route>
             <Route component={NotFound} />
           </Switch>

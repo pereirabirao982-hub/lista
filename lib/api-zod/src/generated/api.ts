@@ -114,6 +114,109 @@ export const ReleaseMyGiftResponse = zod.object({
 
 
 /**
+ * @summary Get the participation saved on this device
+ */
+export const GetGuestParticipationResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "guestName": zod.string(),
+  "guestEmail": zod.string(),
+  "attending": zod.boolean(),
+  "plusOne": zod.boolean(),
+  "note": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Create a participation without requiring login
+ */
+export const createGuestParticipationBodyOneGiftIdsMax = 2;
+
+export const createGuestParticipationBodyTwoGuestNameMin = 2;
+export const createGuestParticipationBodyTwoGuestNameMax = 120;
+
+
+
+export const CreateGuestParticipationBody = zod.object({
+  "attending": zod.boolean(),
+  "plusOne": zod.boolean(),
+  "note": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()).max(createGuestParticipationBodyOneGiftIdsMax)
+}).and(zod.object({
+  "guestName": zod.string().min(createGuestParticipationBodyTwoGuestNameMin).max(createGuestParticipationBodyTwoGuestNameMax)
+}))
+
+export const CreateGuestParticipationResponse = zod.object({
+  "accessToken": zod.string(),
+  "participation": zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "guestName": zod.string(),
+  "guestEmail": zod.string(),
+  "attending": zod.boolean(),
+  "plusOne": zod.boolean(),
+  "note": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
+  "updatedAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Update the participation saved on this device
+ */
+export const updateGuestParticipationBodyOneGiftIdsMax = 2;
+
+export const updateGuestParticipationBodyTwoGuestNameMin = 2;
+export const updateGuestParticipationBodyTwoGuestNameMax = 120;
+
+
+
+export const UpdateGuestParticipationBody = zod.object({
+  "attending": zod.boolean(),
+  "plusOne": zod.boolean(),
+  "note": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()).max(updateGuestParticipationBodyOneGiftIdsMax)
+}).and(zod.object({
+  "guestName": zod.string().min(updateGuestParticipationBodyTwoGuestNameMin).max(updateGuestParticipationBodyTwoGuestNameMax)
+}))
+
+export const UpdateGuestParticipationResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "guestName": zod.string(),
+  "guestEmail": zod.string(),
+  "attending": zod.boolean(),
+  "plusOne": zod.boolean(),
+  "note": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Release gifts from the participation saved on this device
+ */
+export const ReleaseGuestGiftResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "guestName": zod.string(),
+  "guestEmail": zod.string(),
+  "attending": zod.boolean(),
+  "plusOne": zod.boolean(),
+  "note": zod.string().nullable(),
+  "giftIds": zod.array(zod.string()),
+  "giftNames": zod.array(zod.string()),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Get attendance and gift reservation summary
  */
 export const GetAdminSummaryResponse = zod.object({

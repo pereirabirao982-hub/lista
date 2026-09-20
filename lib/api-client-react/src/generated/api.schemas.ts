@@ -57,6 +57,19 @@ export interface ParticipationInput {
   giftIds: string[];
 }
 
+export type GuestParticipationInput = ParticipationInput & {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  guestName: string;
+};
+
+export interface GuestParticipationAccess {
+  accessToken: string;
+  participation: Participation;
+}
+
 export interface AdminSummary {
   totalGuests: number;
   attendingCount: number;

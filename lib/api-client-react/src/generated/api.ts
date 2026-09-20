@@ -25,6 +25,8 @@ import type {
   ErrorResponse,
   Event,
   Gift,
+  GuestParticipationAccess,
+  GuestParticipationInput,
   HealthStatus,
   Participation,
   ParticipationInput
@@ -506,6 +508,296 @@ export const useReleaseMyGift = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getReleaseMyGiftMutationOptions(options));
+    }
+
+export const getGetGuestParticipationUrl = () => {
+
+
+
+
+  return `/api/guest/participation`
+}
+
+/**
+ * @summary Get the participation saved on this device
+ */
+export const getGuestParticipation = async ( options?: Parameters<typeof customFetch>[1]): Promise<Participation> => {
+
+  return customFetch<Participation>(getGetGuestParticipationUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGuestParticipationQueryKey = () => {
+    return [
+    `/api/guest/participation`
+    ] as const;
+    }
+
+
+export const getGetGuestParticipationQueryOptions = <TData = Awaited<ReturnType<typeof getGuestParticipation>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGuestParticipation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGuestParticipationQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuestParticipation>>> = ({ signal }) => getGuestParticipation({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGuestParticipation>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetGuestParticipationQueryResult = NonNullable<Awaited<ReturnType<typeof getGuestParticipation>>>
+export type GetGuestParticipationQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get the participation saved on this device
+ */
+
+export function useGetGuestParticipation<TData = Awaited<ReturnType<typeof getGuestParticipation>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGuestParticipation>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetGuestParticipationQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateGuestParticipationUrl = () => {
+
+
+
+
+  return `/api/guest/participation`
+}
+
+/**
+ * @summary Create a participation without requiring login
+ */
+export const createGuestParticipation = async (guestParticipationInput: GuestParticipationInput, options?: Parameters<typeof customFetch>[1]): Promise<GuestParticipationAccess> => {
+
+  return customFetch<GuestParticipationAccess>(getCreateGuestParticipationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(guestParticipationInput)
+  }
+);}
+
+
+
+
+
+export const getCreateGuestParticipationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestParticipation>>, TError,{data: BodyType<GuestParticipationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGuestParticipation>>, TError,{data: BodyType<GuestParticipationInput>}, TContext> => {
+
+const mutationKey = ['createGuestParticipation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGuestParticipation>>, {data: BodyType<GuestParticipationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createGuestParticipation(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGuestParticipationMutationResult = NonNullable<Awaited<ReturnType<typeof createGuestParticipation>>>
+    export type CreateGuestParticipationMutationBody = BodyType<GuestParticipationInput>
+    export type CreateGuestParticipationMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create a participation without requiring login
+ */
+export const useCreateGuestParticipation = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGuestParticipation>>, TError,{data: BodyType<GuestParticipationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGuestParticipation>>,
+        TError,
+        {data: BodyType<GuestParticipationInput>},
+        TContext
+      > => {
+      return useMutation(getCreateGuestParticipationMutationOptions(options));
+    }
+
+export const getUpdateGuestParticipationUrl = () => {
+
+
+
+
+  return `/api/guest/participation`
+}
+
+/**
+ * @summary Update the participation saved on this device
+ */
+export const updateGuestParticipation = async (guestParticipationInput: GuestParticipationInput, options?: Parameters<typeof customFetch>[1]): Promise<Participation> => {
+
+  return customFetch<Participation>(getUpdateGuestParticipationUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(guestParticipationInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateGuestParticipationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGuestParticipation>>, TError,{data: BodyType<GuestParticipationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateGuestParticipation>>, TError,{data: BodyType<GuestParticipationInput>}, TContext> => {
+
+const mutationKey = ['updateGuestParticipation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateGuestParticipation>>, {data: BodyType<GuestParticipationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateGuestParticipation(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateGuestParticipationMutationResult = NonNullable<Awaited<ReturnType<typeof updateGuestParticipation>>>
+    export type UpdateGuestParticipationMutationBody = BodyType<GuestParticipationInput>
+    export type UpdateGuestParticipationMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update the participation saved on this device
+ */
+export const useUpdateGuestParticipation = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGuestParticipation>>, TError,{data: BodyType<GuestParticipationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateGuestParticipation>>,
+        TError,
+        {data: BodyType<GuestParticipationInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateGuestParticipationMutationOptions(options));
+    }
+
+export const getReleaseGuestGiftUrl = () => {
+
+
+
+
+  return `/api/guest/participation/gift`
+}
+
+/**
+ * @summary Release gifts from the participation saved on this device
+ */
+export const releaseGuestGift = async ( options?: Parameters<typeof customFetch>[1]): Promise<Participation> => {
+
+  return customFetch<Participation>(getReleaseGuestGiftUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getReleaseGuestGiftMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof releaseGuestGift>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof releaseGuestGift>>, TError,void, TContext> => {
+
+const mutationKey = ['releaseGuestGift'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof releaseGuestGift>>, void> = () => {
+
+
+          return  releaseGuestGift(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReleaseGuestGiftMutationResult = NonNullable<Awaited<ReturnType<typeof releaseGuestGift>>>
+
+    export type ReleaseGuestGiftMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Release gifts from the participation saved on this device
+ */
+export const useReleaseGuestGift = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof releaseGuestGift>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof releaseGuestGift>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getReleaseGuestGiftMutationOptions(options));
     }
 
 export const getGetAdminSummaryUrl = () => {

@@ -2,32 +2,55 @@ import { Check, ChevronRight, CircleAlert, Gift, Heart, LoaderCircle, LockKeyhol
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useUser } from '@clerk/react';
 import { AppShell } from '@/components/app-shell';
 import {
   getGetAdminSummaryQueryKey,
   getGetEventQueryKey,
-  getGetMyParticipationQueryKey,
+  getGetGuestParticipationQueryKey,
   getListAdminParticipationsQueryKey,
   getListGiftsQueryKey,
   type Gift as GiftType,
-  type ParticipationInput,
+  type GuestParticipationInput,
+  useCreateGuestParticipation,
   useGetEvent,
-  useGetMyParticipation,
+  useGetGuestParticipation,
   useListGifts,
-  useReleaseMyGift,
-  useUpsertMyParticipation,
+  useReleaseGuestGift,
+  useUpdateGuestParticipation,
 } from '@workspace/api-client-react';
 
+const GUEST_TOKEN_KEY = 'lista-presenca-guest-token';
+
+function readGuestToken() {
+  try { return localStorage.getItem(GUEST_TOKEN_KEY); } catch { return null; }
+}
+
+function storeGuestToken(token: string | null) {
+  try {
+    if (token) localStorage.setItem(GUEST_TOKEN_KEY, token);
+    else localStorage.removeItem(GUEST_TOKEN_KEY);
+  } catch {
+    // The reservation still works for this page load when storage is unavailable.
+  }
+}
+
 export default function UserPortalPage() {
-  const { user } = useUser();
   const client = useQueryClient();
+  const [token, setToken] = useState(readGuestToken);
+  const request = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
   const eventQuery = useGetEvent({ query: { queryKey: getGetEventQueryKey() } });
-  const participationQuery = useGetMyParticipation({ query: { queryKey: getGetMyParticipationQueryKey() } });
-  const giftsQuery = useListGifts({ query: { queryKey: getListGiftsQueryKey() } });
-  const upsert = useUpsertMyParticipation();
-  const release = useReleaseMyGift();
-  const form = useForm<ParticipationInput>({ defaultValues: { attending: true, plusOne: false, note: '', giftIds: [] } });
+  const participationQuery = useGetGuestParticipation({
+    query: { queryKey: getGetGuestParticipationQueryKey(), enabled: Boolean(token), retry: false },
+    request,
+  });
+  const giftsQuery = useListGifts({
+    query: { queryKey: [...getListGiftsQueryKey(), token ? 'guest' : 'public'] },
+    request,
+  });
+  const createParticipation = useCreateGuestParticipation();
+  const updateParticipation = useUpdateGuestParticipation({ request });
+  const release = useReleaseGuestGift({ request });
+  const form = useForm<GuestParticipationInput>({ defaultValues: { guestName: '', attending: true, plusOne: false, note: '', giftIds: [] } });
   const [saved, setSaved] = useState(false);
 
   const participation = participationQuery.data;
@@ -35,30 +58,55 @@ export default function UserPortalPage() {
 
   useEffect(() => {
     if (participation) {
-      form.reset({ attending: participation.attending, plusOne: participation.plusOne, note: participation.note || '', giftIds: participation.giftIds });
+      form.reset({ guestName: participation.guestName, attending: participation.attending, plusOne: participation.plusOne, note: participation.note || '', giftIds: participation.giftIds });
     }
   }, [participation, form]);
 
-  const onSubmit = (values: ParticipationInput) => {
+  useEffect(() => {
+    if (token && participationStatus === 401) {
+      storeGuestToken(null);
+      setToken(null);
+      client.removeQueries({ queryKey: getGetGuestParticipationQueryKey() });
+    }
+  }, [client, participationStatus, token]);
+
+  useEffect(() => {
+    const updateStatus = (updateParticipation.error as { status?: number } | null)?.status;
+    const releaseStatus = (release.error as { status?: number } | null)?.status;
+    if (token && (updateStatus === 401 || releaseStatus === 401)) {
+      storeGuestToken(null);
+      setToken(null);
+      form.reset({ guestName: '', attending: true, plusOne: false, note: '', giftIds: [] });
+      client.removeQueries({ queryKey: getGetGuestParticipationQueryKey() });
+    }
+  }, [client, form, release.error, token, updateParticipation.error]);
+
+  const onSubmit = (values: GuestParticipationInput) => {
     setSaved(false);
     if (values.attending && values.giftIds.length < 1) {
       form.setError('giftIds', { type: 'min', message: 'Escolha pelo menos um presente para confirmar.' });
       return;
     }
-    const payload = { ...values, giftIds: values.attending ? values.giftIds : [], plusOne: values.attending ? values.plusOne : false, note: values.note?.trim() || null };
-    upsert.mutate({ data: payload }, {
-      onSuccess: async () => {
+    const payload = { ...values, guestName: values.guestName.trim(), giftIds: values.attending ? values.giftIds : [], plusOne: values.attending ? values.plusOne : false, note: values.note?.trim() || null };
+    const onSuccess = async (result: typeof participation | { accessToken: string; participation: NonNullable<typeof participation> }) => {
+        const created = result && 'accessToken' in result ? result : null;
+        if (created) {
+          storeGuestToken(created.accessToken);
+          setToken(created.accessToken);
+          client.setQueryData(getGetGuestParticipationQueryKey(), created.participation);
+        }
         setSaved(true);
         await Promise.all([
-          client.invalidateQueries({ queryKey: getGetMyParticipationQueryKey() }),
+          client.invalidateQueries({ queryKey: getGetGuestParticipationQueryKey() }),
           client.invalidateQueries({ queryKey: getListGiftsQueryKey() }),
           client.invalidateQueries({ queryKey: getGetAdminSummaryQueryKey() }),
           client.invalidateQueries({ queryKey: getListAdminParticipationsQueryKey() }),
           client.invalidateQueries({ queryKey: getGetEventQueryKey() }),
         ]);
         setTimeout(() => setSaved(false), 5000);
-      },
-    });
+    };
+    if (token) updateParticipation.mutate({ data: payload }, { onSuccess });
+    else createParticipation.mutate({ data: payload }, { onSuccess });
   };
 
   const releaseGift = () => {
@@ -67,7 +115,7 @@ export default function UserPortalPage() {
       onSuccess: async () => {
         form.setValue('giftIds', [], { shouldDirty: true });
         await Promise.all([
-          client.invalidateQueries({ queryKey: getGetMyParticipationQueryKey() }),
+          client.invalidateQueries({ queryKey: getGetGuestParticipationQueryKey() }),
           client.invalidateQueries({ queryKey: getListGiftsQueryKey() }),
           client.invalidateQueries({ queryKey: getGetAdminSummaryQueryKey() }),
           client.invalidateQueries({ queryKey: getListAdminParticipationsQueryKey() })
@@ -76,16 +124,18 @@ export default function UserPortalPage() {
     });
   };
 
-  const loading = eventQuery.isLoading || participationQuery.isLoading || giftsQuery.isLoading;
+  const saving = createParticipation.isPending || updateParticipation.isPending;
+  const saveError = createParticipation.isError || updateParticipation.isError;
+  const loading = eventQuery.isLoading || (Boolean(token) && participationQuery.isLoading) || giftsQuery.isLoading;
   if (loading) return <AppShell><PortalSkeleton /></AppShell>;
-  if ((participationQuery.isError && participationStatus !== 404) || giftsQuery.isError || eventQuery.isError || !eventQuery.data) return <AppShell><QueryProblem retry={() => { eventQuery.refetch(); participationQuery.refetch(); giftsQuery.refetch(); }} /></AppShell>;
+  if ((participationQuery.isError && participationStatus !== 401) || giftsQuery.isError || eventQuery.isError || !eventQuery.data) return <AppShell><QueryProblem retry={() => { eventQuery.refetch(); participationQuery.refetch(); giftsQuery.refetch(); }} /></AppShell>;
 
   const event = eventQuery.data;
   const gifts = giftsQuery.data || [];
-  const firstName = user?.firstName || participation?.guestName?.split(' ')[0] || 'você';
+  const firstName = participation?.guestName?.split(' ')[0] || 'você';
 
   return (
-    <AppShell>
+    <AppShell guestName={participation?.guestName}>
       <div className="animate-fade-in-up">
         <div className="flex flex-col gap-6 border-b border-border pb-10 md:flex-row md:items-end md:justify-between">
           <div>
@@ -99,8 +149,9 @@ export default function UserPortalPage() {
         </div>
 
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-12 grid gap-10 xl:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="space-y-10">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-12 grid min-w-0 gap-10 xl:grid-cols-[minmax(0,1fr)_420px]">
+            <div className="min-w-0 space-y-10">
+              <NameCard />
               <AttendanceCard />
               <GiftPicker gifts={gifts} />
               <NoteField />
@@ -156,11 +207,11 @@ export default function UserPortalPage() {
             <div className="sticky bottom-6 z-20 -mx-4 flex flex-col items-stretch gap-4 rounded-3xl border border-border/80 bg-background/90 p-3 shadow-2xl backdrop-blur-md sm:static sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
               <div className="flex items-center gap-3 px-3 sm:px-0">
                 {saved && <span className="flex items-center gap-2 text-sm font-medium text-emerald-600 animate-fade-in-up" data-testid="status-rsvp-saved"><span className="grid size-6 place-items-center rounded-full bg-emerald-100"><Check size={14} /></span> Resposta salva com carinho</span>}
-                {upsert.isError && <span className="flex items-center gap-2 text-sm font-medium text-destructive" data-testid="status-rsvp-error"><CircleAlert size={18} /> Não foi possível salvar. Tente novamente.</span>}
+                {saveError && <span className="flex items-center gap-2 text-sm font-medium text-destructive" data-testid="status-rsvp-error"><CircleAlert size={18} /> Não foi possível salvar. Confira os dados ou escolha outro presente.</span>}
               </div>
-              <button type="submit" disabled={upsert.isPending} className="group flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl bg-accent px-8 py-4 text-sm font-medium text-accent-foreground shadow-xl transition-all hover:-translate-y-1 hover:shadow-2xl hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 sm:w-auto sm:rounded-full" data-testid="button-save-rsvp">
-                {upsert.isPending ? <LoaderCircle size={18} className="animate-spin" /> : <Send size={18} />}
-                {upsert.isPending ? 'Salvando...' : 'Salvar minha resposta'}
+              <button type="submit" disabled={saving} className="group flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl bg-accent px-8 py-4 text-sm font-medium text-accent-foreground shadow-xl transition-all hover:-translate-y-1 hover:shadow-2xl hover:bg-accent/90 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 sm:w-auto sm:rounded-full" data-testid="button-save-rsvp">
+                {saving ? <LoaderCircle size={18} className="animate-spin" /> : <Send size={18} />}
+                {saving ? 'Salvando...' : 'Salvar minha resposta'}
                 <ChevronRight size={18} className="transition-transform group-hover:translate-x-1.5" />
               </button>
             </div>
@@ -171,8 +222,28 @@ export default function UserPortalPage() {
   );
 }
 
+function NameCard() {
+  const { register, formState: { errors } } = useFormContext<GuestParticipationInput>();
+  return (
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-10">
+      <p className="mono text-[11px] font-medium uppercase tracking-[0.2em] text-accent">Seu nome</p>
+      <h2 className="serif mt-4 break-words text-3xl leading-tight text-primary sm:text-4xl">Como podemos te chamar?</h2>
+      <input
+        {...register('guestName', { required: 'Digite seu nome.', minLength: { value: 2, message: 'Digite pelo menos 2 letras.' } })}
+        maxLength={120}
+        autoComplete="name"
+        placeholder="Seu nome completo"
+        className="mt-7 min-h-14 w-full rounded-2xl border border-input bg-background px-5 text-base text-primary outline-none transition-all placeholder:text-muted-foreground/60 focus:border-accent focus:ring-1 focus:ring-accent"
+        data-testid="input-guest-name"
+      />
+      {errors.guestName?.message && <p className="mt-3 text-sm font-medium text-destructive">{errors.guestName.message}</p>}
+      <p className="mt-3 text-sm text-muted-foreground">Sem cadastro. Sua resposta ficará salva neste aparelho.</p>
+    </section>
+  );
+}
+
 function AttendanceCard() {
-  const { register, watch, setValue } = useFormContext<ParticipationInput>();
+  const { register, watch, setValue } = useFormContext<GuestParticipationInput>();
   const attending = watch('attending');
 
   return (
@@ -210,7 +281,7 @@ function Choice({ selected, onClick, title, detail, testId }: { selected: boolea
 }
 
 function GiftPicker({ gifts }: { gifts: GiftType[] }) {
-  const { watch, setValue, setError, clearErrors, formState: { errors } } = useFormContext<ParticipationInput>();
+  const { watch, setValue, setError, clearErrors, formState: { errors } } = useFormContext<GuestParticipationInput>();
   const attending = watch('attending');
   const selectedIds = watch('giftIds') || [];
   const [category, setCategory] = useState('Todas');
@@ -316,8 +387,8 @@ function GiftPicker({ gifts }: { gifts: GiftType[] }) {
 }
 
 function NoteField() {
-  const { register } = useFormContext<ParticipationInput>();
-  const attending = useFormContext<ParticipationInput>().watch('attending');
+  const { register } = useFormContext<GuestParticipationInput>();
+  const attending = useFormContext<GuestParticipationInput>().watch('attending');
 
   return (
     <section className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-10">

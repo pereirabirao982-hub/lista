@@ -13,7 +13,7 @@ tags:
   - name: event
     description: Public event details and gift catalog
   - name: guest
-    description: Authenticated guest RSVP and gift reservation
+    description: Guest RSVP and gift reservation
   - name: admin
     description: Host administration
 paths:
@@ -127,6 +127,100 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /guest/participation:
+    get:
+      operationId: getGuestParticipation
+      tags: [guest]
+      summary: Get the participation saved on this device
+      security:
+        - guestToken: []
+      responses:
+        "200":
+          description: Current guest participation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participation"
+        "401":
+          description: Invalid or missing device access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createGuestParticipation
+      tags: [guest]
+      summary: Create a participation without requiring login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestParticipationInput"
+      responses:
+        "201":
+          description: Participation created with device access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestParticipationAccess"
+        "409":
+          description: Gift was just reserved by another guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateGuestParticipation
+      tags: [guest]
+      summary: Update the participation saved on this device
+      security:
+        - guestToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestParticipationInput"
+      responses:
+        "200":
+          description: Participation updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participation"
+        "401":
+          description: Invalid or missing device access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Gift was just reserved by another guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /guest/participation/gift:
+    delete:
+      operationId: releaseGuestGift
+      tags: [guest]
+      summary: Release gifts from the participation saved on this device
+      security:
+        - guestToken: []
+      responses:
+        "200":
+          description: Updated participation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participation"
+        "401":
+          description: Invalid or missing device access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/summary:
     get:
       operationId: getAdminSummary
@@ -187,6 +281,9 @@ components:
       type: apiKey
       in: cookie
       name: __session
+    guestToken:
+      type: http
+      scheme: bearer
   schemas:
     HealthStatus:
       type: object
@@ -320,6 +417,27 @@ components:
         - plusOne
         - note
         - giftIds
+    GuestParticipationInput:
+      allOf:
+        - $ref: "#/components/schemas/ParticipationInput"
+        - type: object
+          properties:
+            guestName:
+              type: string
+              minLength: 2
+              maxLength: 120
+          required:
+            - guestName
+    GuestParticipationAccess:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        participation:
+          $ref: "#/components/schemas/Participation"
+      required:
+        - accessToken
+        - participation
     AdminSummary:
       type: object
       properties:

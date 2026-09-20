@@ -11,6 +11,8 @@ export * from './adminSummary';
 export * from './errorResponse';
 export * from './event';
 export * from './gift';
+export * from './guestParticipationAccess';
+export * from './guestParticipationInput';
 export * from './healthStatus';
 export * from './participation';
 export * from './participationInput';

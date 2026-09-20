@@ -50,12 +50,9 @@ export default function HomePage() {
               {event.subtitle}
             </p>
             <div className="mt-10 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
-              <Link href="/sign-up" className="group flex min-h-14 items-center justify-center gap-3 rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:bg-primary/90" data-testid="link-guest-sign-up">
+              <Link href="/user-portal" className="group flex min-h-14 items-center justify-center gap-3 rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:bg-primary/90" data-testid="link-guest-rsvp">
                 Confirmar presença
                 <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1.5" />
-              </Link>
-              <Link href="/sign-in" className="flex min-h-14 items-center justify-center rounded-full border border-primary/20 bg-card px-8 py-4 text-sm font-medium text-primary transition-all duration-300 hover:border-primary/50 hover:bg-secondary" data-testid="link-guest-sign-in">
-                Já tenho acesso
               </Link>
             </div>
             <p className="mt-6 text-sm text-primary/50 font-medium">Leva menos de dois minutos. E você escolhe um presente especial.</p>
@@ -117,7 +114,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="grid gap-8 sm:grid-cols-2 lg:gap-10">
-              <Step number="01" title="Entre no convite" text="Crie seu acesso em poucos segundos, com segurança. Seu espaço é privado." delay="delay-100" />
+              <Step number="01" title="Diga seu nome" text="Sem cadastro e sem senha. Seu acesso fica salvo neste aparelho." delay="delay-100" />
               <Step number="02" title="Diga se vem" text="Avise o anfitrião e conte se chega acompanhado. Tudo muito rápido." delay="delay-200" />
               <Step number="03" title="Escolha um gesto" text="Reserve um presente da lista. Um por pessoa. Atualizado em tempo real." delay="delay-300" />
             </div>
