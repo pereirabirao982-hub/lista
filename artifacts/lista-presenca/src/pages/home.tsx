@@ -58,11 +58,11 @@ export default function HomePage() {
             <p className="mt-6 text-sm text-primary/50 font-medium">Leva menos de dois minutos. E você escolhe um presente especial.</p>
           </div>
 
-          <div className="relative min-h-[400px] animate-fade-in-up delay-200 sm:min-h-[550px] lg:mt-0 mt-8">
+          <div className="relative mt-8 animate-fade-in-up delay-200 sm:min-h-[550px] lg:mt-0">
             <div className="absolute left-[5%] top-[5%] size-[80%] rounded-full bg-secondary/80 mix-blend-multiply blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
             <div className="absolute right-[5%] bottom-[5%] size-[60%] rounded-full bg-accent/10 mix-blend-multiply blur-3xl animate-pulse" style={{ animationDuration: '12s' }} />
 
-            <div className="absolute right-0 top-4 w-[90%] max-w-[440px] rounded-[2.5rem] border border-border/60 bg-card/90 p-8 shadow-2xl backdrop-blur-sm sm:p-12">
+            <div className="relative ml-auto w-[96%] max-w-[440px] rounded-[2.5rem] border border-border/60 bg-card/90 p-8 shadow-2xl backdrop-blur-sm sm:absolute sm:right-0 sm:top-4 sm:w-[90%] sm:p-12">
               <div className="flex items-start justify-between">
                 <span className="mono text-[11px] font-medium uppercase tracking-[0.2em] text-accent">O encontro</span>
                 <span className="grid size-10 place-items-center rounded-full bg-accent/15 text-accent"><CalendarDays size={18} /></span>
@@ -87,7 +87,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="absolute -bottom-6 left-0 flex w-[55%] max-w-[240px] -rotate-3 flex-col gap-4 rounded-[2rem] bg-accent p-6 text-accent-foreground shadow-2xl sm:p-8 hover:rotate-0 transition-transform duration-500">
+            <div className="relative z-10 mt-5 flex w-[55%] max-w-[240px] -rotate-3 flex-col gap-4 rounded-[2rem] bg-accent p-6 text-accent-foreground shadow-2xl transition-transform duration-500 hover:rotate-0 sm:absolute sm:-bottom-6 sm:left-0 sm:mt-0 sm:p-8">
               <span className="grid size-10 place-items-center rounded-full border border-accent-foreground/30 bg-accent-foreground/10">
                 <Heart size={18} className="fill-current" />
               </span>
