@@ -91,25 +91,30 @@ export const giftSeed = [
 ] as const;
 
 export async function seedEvent(): Promise<void> {
-  const [existingEvent] = await db
-    .select({ id: eventsTable.id })
-    .from(eventsTable)
-    .where(eq(eventsTable.id, EVENT_ID));
-
-  if (!existingEvent) {
-    await db.insert(eventsTable).values({
+  await db
+    .insert(eventsTable)
+    .values({
       id: EVENT_ID,
       title: "Lista de presentes",
       subtitle: "Sua presença é o nosso maior presente",
-      dateLabel: "Uma nova fase começa em breve",
-      dateIso: new Date("2026-12-19T18:00:00-03:00").toISOString(),
-      location: "A confirmar com os convidados",
-      address: "Detalhes do endereço serão compartilhados em breve",
+      dateLabel: "Sábado, 24 de outubro, às 18h",
+      dateIso: new Date("2026-10-24T18:00:00-03:00").toISOString(),
+      location: "Estalagem, Viamão - RS",
+      address: "R. Eng. Ildo Meneghetti, 955 - Estalagem, Viamão - RS, 94425-010",
       hostName: "Anfitrião do evento",
       hostEmail: ADMIN_EMAIL,
-      rsvpDeadline: "Confirme sua presença até 10 de dezembro",
+      rsvpDeadline: "Confirme sua presença até 15 de outubro",
+    })
+    .onConflictDoUpdate({
+      target: eventsTable.id,
+      set: {
+        dateLabel: "Sábado, 24 de outubro, às 18h",
+        dateIso: new Date("2026-10-24T18:00:00-03:00").toISOString(),
+        location: "Estalagem, Viamão - RS",
+        address: "R. Eng. Ildo Meneghetti, 955 - Estalagem, Viamão - RS, 94425-010",
+        rsvpDeadline: "Confirme sua presença até 15 de outubro",
+      },
     });
-  }
 
   await db
     .insert(giftsTable)
