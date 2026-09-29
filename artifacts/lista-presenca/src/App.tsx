@@ -71,7 +71,7 @@ function getClerkAppearance(dark: boolean) {
 function Protected({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded) return <div className="min-h-[100dvh] bg-background paper-grain" />;
-  return isSignedIn ? <>{children}</> : <Redirect to="/" />;
+  return isSignedIn ? <>{children}</> : <Redirect to="/sign-in" />;
 }
 
 function SignInPage() {
